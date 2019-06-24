@@ -1,0 +1,85 @@
+# Setting up Blather
+
+## 1. Pull down source code:
+```
+$ git clone https://<git.user>@github.com/blatherorg/blather_ui.git
+$ git clone https://<git.user>@github.com/blatherorg/blat-gateway.git
+$ git clone https://<git.user>@github.com/blatherorg/blather_main.git
+$ git clone https://<git.user>@github.com/blatherorg/blather-trending.git
+```
+
+## 2. Pull down Cassandra docker image
+`$ docker pull bitnami/cassandra:latest`
+
+## 3. Build the blather service and docker image
+```
+$ cd blather-blatz
+$ gradle build
+$ gradle buildDocker
+```
+
+## 4. Build the blather-idm docker image
+```
+$ cd ../blather-idm
+$ docker build -t blather-idm -f Dockerfile .
+```
+
+## 5. Build the Trending docker image
+```
+$ cd ../blather-trending
+$ docker build -t blather-trending -f Dockerfile .
+```
+
+## 6. Build the UI docker image
+```
+$ cd ../blather-ui
+$ docker build -t blather-ui -f Dockerfile .
+```
+`# not necessary ... will be done by docker-compose: docker run --network blathermain_blather -p 80:80 -d blather-ui:latest`
+
+## 7. Build and install the kafka image
+```
+$ git clone https://github.com/wurstmeister/kafka-docker
+$ cd kafka-docker
+$ docker build -t blather-kafka -f Dockerfile .
+```
+
+## 8. Add blather-kafka to /etc/hosts on your target machine
+```
+$ 127.0.0.1 localhost4.localdomain4 localhost4 blather-kafka
+```
+
+## 9. Start the 9 docker images 
+- blather-idm
+- blather-cassandra
+- blather-mongo
+- blather-gateway
+- blather-ui, blather-kafka
+- wurstmeister/zookeeper
+- blather-trending
+- blather-statsd
+
+```
+$ cd ../blather_main
+$ docker-compose up -d
+```
+
+## 10. Test your config
+http://localhost:8081
+GET http://localhost:8081/blats
+POST http://localhost:8081/blats
+# if you have kafkacat installed, you can see the kafka
+# topic has your new blat
+kafkacat -C -b ${your_ip}:9092 -t blatz
+
+
+---
+
+## Curl command for POSTing a new blat:
+curl -v -k -X POST \
+ http://localhost:8081//blats \
+ -H 'accept: application/json' \
+ -H 'authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyOTA5NDRjMzQxYmEiLCJpYXQiOjE1MTEyMDM5MjR9.X20nLe5MtJlQjO7DMbSmj4wGWAPbfwyHqxAriXgFFJQ' \
+ -H 'cache-control: no-cache' \
+ -H 'content-type: application/json' \
+-d '{"blatId":"", "message":"the latest blat (3) from &djs", "creator":"&djs", "timestamp":""}'

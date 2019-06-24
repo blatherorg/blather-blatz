@@ -1,0 +1,59 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'docker'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.5.RELEASE")
+        classpath('se.transmode.gradle:gradle-docker:1.2')
+    }
+}
+
+
+
+description = """blather"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
+
+jar.baseName = 'blather.jar'
+bootJar {
+    baseName = 'blather'
+}
+
+repositories {
+    mavenCentral()
+}
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web")
+    //compile group: 'org.springframework.boot', name: 'spring-boot-starter', version:'2.1.1.RELEASE'
+    compile group: 'org.springframework.kafka', name: 'spring-kafka', version:'2.1.10.RELEASE'
+    compile group: 'org.springframework', name: 'spring-web', version: '5.0.9.RELEASE'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.1.1.RELEASE'
+    compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
+    testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version:'2.1.1.RELEASE'
+    testCompile group: 'org.cassandraunit', name: 'cassandra-unit', version: '3.5.0.1'
+    compile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.6.0'
+    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
+}
+
+task buildDocker {
+    doLast {
+        def cmd = ['docker', "build", "-t", "blather-blatz", "."]
+        logger.lifecycle("Running cmd ${cmd}")
+        ExecResult execResult = exec {
+            workingDir project.projectDir
+            commandLine cmd
+        }
+    }
+}
+
